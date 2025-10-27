@@ -1,0 +1,37 @@
+# Nextflow cache and configuration
+.nextflow.log*
+nextflow.config.backup
+
+# Nextflow temporary files and directories
+.nextflow/
+work/
+trace.txt
+report.html
+timeline.html
+.nextflow.log*
+
+# Docker/Singularity related (if building containers locally)
+*.dockerignore
+Dockerfile.bak
+
+# IDE-specific files (common examples)
+.idea/
+.vscode/
+*.swp
+*.bak
+
+# Python files (if using Python scripts)
+*.pyc
+__pycache__/
+
+# macOS and Windows system files
+.DS_Store
+Thumbs.db
+
+# R-specific files (if using R scripts)
+.Rhistory
+.Rdata
+.Rproj.user/
+
+# Project-specific temporary files
+results/
