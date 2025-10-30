@@ -1,3 +1,13 @@
+# Docker/Singularity related (if building containers locally)
+*.dockerignore
+Dockerfile.bak
+
+# IDE-specific files (common examples)
+.idea/
+.vscode/
+*.swp
+*.bak
+
 # Nextflow cache and configuration
 .nextflow.log*
 nextflow.config.backup
@@ -10,28 +20,26 @@ report.html
 timeline.html
 .nextflow.log*
 
-# Docker/Singularity related (if building containers locally)
-*.dockerignore
-Dockerfile.bak
-
-# IDE-specific files (common examples)
-.idea/
-.vscode/
-*.swp
-*.bak
+# O/S system files
+.DS_Store
+Thumbs.db
 
 # Python files (if using Python scripts)
 *.pyc
 __pycache__/
 
-# macOS and Windows system files
-.DS_Store
-Thumbs.db
-
 # R-specific files (if using R scripts)
 .Rhistory
 .Rdata
 .Rproj.user/
+
+# Terraform/Terragrunt
+.terraform/
+.terragrunt-cache/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+.tf.out
 
 # Project-specific temporary files
 results/
