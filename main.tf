@@ -1,5 +1,5 @@
 provider "aws" {
-  region     = "us-west-2"
+  region = "us-west-2"
 }
 
 #
@@ -7,11 +7,11 @@ provider "aws" {
 #
 
 variable "service_name" {
-    default = "nextflow"
+  default = "nextflow"
 }
 
 variable "aws_region" {
-    default = "us-west-2"
+  default = "us-west-2"
 }
 
 # Network configuration.
@@ -73,7 +73,7 @@ resource "aws_batch_compute_environment" "nf_ec2_ce" {
 
   service_role = aws_iam_role.nf_batch_service_role.arn
 
-  type         = "MANAGED"
+  type = "MANAGED"
 
   depends_on = [
     # Required to ensure that Batch can manage other AWS services on our behalf.
@@ -150,6 +150,28 @@ data "aws_iam_policy_document" "nf_ecs_role_policy_document_assume_role" {
   }
 }
 
+resource "aws_iam_policy" "nf_ecs_role_policy_document_s3_access" {
+  name = "${var.service_name}-EcsS3AccessPolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket",
+        ]
+        Effect = "Allow"
+        Resource = [
+          module.nf_s3_bucket.s3_bucket_arn,
+          "${module.nf_s3_bucket.s3_bucket_arn}/*",
+        ]
+      }
+    ]
+  })
+}
+
 # Create the ECS instance role
 resource "aws_iam_role" "nf_ecs_instance_role" {
   name               = "${var.service_name}-EcsInstanceRole"
@@ -164,6 +186,11 @@ resource "aws_iam_role_policy_attachment" "nf_ecs_instance_role_ecs_for_ec2_poli
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
+resource "aws_iam_role_policy_attachment" "nf_ecs_instance_role_s3_access_policy" {
+  role       = aws_iam_role.nf_ecs_instance_role.name
+  policy_arn = aws_iam_policy.nf_ecs_role_policy_document_s3_access.arn
+}
+
 # Create the ECS instance profile to allow EC2 instances to assume the ECS instance role
 resource "aws_iam_instance_profile" "nf_ecs_instance_profile" {
   name_prefix = "${var.service_name}-"
@@ -174,10 +201,21 @@ resource "aws_iam_instance_profile" "nf_ecs_instance_profile" {
 # S3 configuration
 #
 
-resource "aws_s3_bucket" "nf_s3_bucket" {
+module "nf_s3_bucket" {
+  source = "terraform-aws-modules/s3-bucket/aws"
+
   bucket = "tmwong-${var.service_name}-scratch"
 
-  lifecycle {
-    prevent_destroy = true
+  acl = "private"
+  control_object_ownership = true
+  force_destroy            = true
+  object_ownership         = "ObjectWriter"
+  putin_khuylo             = true
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
   }
 }
