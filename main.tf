@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "us-west-2"
-}
-
 #
 # Variables and external data sources
 #
@@ -14,32 +10,24 @@ variable "aws_region" {
   default = "us-west-2"
 }
 
-# Network configuration.
-# Assumes that you have tagged your default VPC, subnets, and security groups with "Name: Default".
-
-data "aws_vpc" "nf_vpc" {
-  filter {
-    name   = "tag:Name"
-    values = ["Default"]
+variable "aws_resource_tags" {
+  default = {
+    Owner = "tmwong"
   }
+  type = map(string)
 }
 
-data "aws_security_group" "nf_sg" {
-  vpc_id = data.aws_vpc.nf_vpc.id
-  filter {
-    name   = "tag:Name"
-    values = ["Default"]
-  }
-}
+#
+# AWS provider configuration
+#
 
-data "aws_subnets" "nf_subnets" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.nf_vpc.id]
-  }
-  filter {
-    name   = "tag:Name"
-    values = ["Default"]
+provider "aws" {
+  region = var.aws_region
+
+  default_tags {
+    tags = merge(var.aws_resource_tags, {
+      Project = var.service_name
+    })
   }
 }
 
@@ -56,7 +44,7 @@ resource "aws_batch_compute_environment" "nf_ec2_ce" {
     instance_role = aws_iam_instance_profile.nf_ecs_instance_profile.arn
 
     instance_type = [
-      "default_x86_64",
+      "default_arm64",
     ]
 
     max_vcpus = 4
@@ -198,6 +186,37 @@ resource "aws_iam_instance_profile" "nf_ecs_instance_profile" {
 }
 
 #
+# Network configuration.
+# Assumes that you have tagged your default VPC, subnets, and security groups with "Name: Default".
+#
+
+data "aws_vpc" "nf_vpc" {
+  filter {
+    name   = "tag:Name"
+    values = ["Default"]
+  }
+}
+
+data "aws_security_group" "nf_sg" {
+  vpc_id = data.aws_vpc.nf_vpc.id
+  filter {
+    name   = "tag:Name"
+    values = ["Default"]
+  }
+}
+
+data "aws_subnets" "nf_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.nf_vpc.id]
+  }
+  filter {
+    name   = "tag:Name"
+    values = ["Default"]
+  }
+}
+
+#
 # S3 configuration
 #
 
@@ -206,7 +225,7 @@ module "nf_s3_bucket" {
 
   bucket = "tmwong-${var.service_name}-scratch"
 
-  acl = "private"
+  acl                      = "private"
   control_object_ownership = true
   force_destroy            = true
   object_ownership         = "ObjectWriter"

@@ -12,29 +12,29 @@ clean:
 # Docker image
 #
 
-.PHONY: ecr-login build-image push-image
+.PHONY: login build push
 
-ecr-login:
+login:
 	aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 221723323706.dkr.ecr.us-west-2.amazonaws.com
 
-build-image:
+build:
 	docker buildx build --platform linux/amd64,linux/arm64 -t fantail/nf-hello-world:latest .
 	docker tag fantail/nf-hello-world:latest 221723323706.dkr.ecr.us-west-2.amazonaws.com/fantail/nf-hello-world:latest
 
-push-image: build-image
+push: build
 	docker push 221723323706.dkr.ecr.us-west-2.amazonaws.com/fantail/nf-hello-world:latest
 
 #
 # Terraform infrastructure
 #
 
-.PHONY: tf-init tf-plan tf-apply
+.PHONY: init plan apply
 
-tf-init:
+init:
 	terraform init
 
-tf-plan:
+plan:
 	terraform plan -out=.tf.out
 
-tf-apply:
+apply:
 	terraform apply .tf.out
