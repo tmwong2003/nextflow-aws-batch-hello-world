@@ -5,5 +5,12 @@
 ## Prerequisites
 
 - An AWS cloud account
-- A [Nextflow installation](https://www.nextflow.io/docs/latest/install.html)
-- A [Terraform installation](https://developer.hashicorp.com/terraform/install)
+- [Docker](https://docs.docker.com/desktop/)
+- [Nextflow](https://www.nextflow.io/docs/latest/install.html)
+- [Terraform](https://developer.hashicorp.com/terraform/install)
+
+## Usage
+
+1. Set up the AWS infrastructure: `make init; make plan; make apply`
+2. Build and deploy the Nextflow Docker image for the Batch containers: `make login; make build; make push`
+3. Run the pipeline: `make run`

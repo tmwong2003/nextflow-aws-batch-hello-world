@@ -3,18 +3,42 @@
 #
 
 variable "service_name" {
+  type    = string
   default = "nextflow"
 }
 
+variable "service_owner" {
+  type = string
+  validation {
+    condition     = length(var.service_owner) > 0
+    error_message = "Got an empty service owner name."
+  }
+}
+
+# AWS
+
 variable "aws_region" {
-  default = "us-west-2"
+  type    = string
+  validation {
+    condition     = length(var.aws_region) > 0
+    error_message = "Got an empty AWS region."
+  }
 }
 
 variable "aws_resource_tags" {
-  default = {
-    Owner = "tmwong"
-  }
   type = map(string)
+  default = {
+  }
+}
+
+# Docker
+
+variable "docker_repository" {
+  type    = string
+  validation {
+    condition     = length(var.docker_repository) > 0
+    error_message = "Got an empty Docker repository name."
+  }
 }
 
 #
@@ -26,6 +50,7 @@ provider "aws" {
 
   default_tags {
     tags = merge(var.aws_resource_tags, {
+      Owner   = var.service_owner
       Project = var.service_name
     })
   }
@@ -114,6 +139,22 @@ module "nf_batch" {
 }
 
 #
+# ECR configuration
+#
+
+resource "aws_ecr_repository" "nf_ecr_repository" {
+  name = "${var.service_owner}/${var.docker_repository}"
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+  force_delete         = true
+  image_tag_mutability = "MUTABLE"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+#
 # IAM configuration
 #
 
@@ -178,7 +219,7 @@ data "aws_subnets" "nf_subnets" {
 module "nf_s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
 
-  bucket = "tmwong-${var.service_name}-scratch"
+  bucket = "${var.service_owner}-${var.service_name}-scratch"
 
   acl                      = "private"
   control_object_ownership = true
